@@ -1,8 +1,7 @@
 /*
 Name: Paul Soy
- Date: October 13, 2025
- Assignment: Lab Activities: Inheritance
- Purpose: Inheritance and polymorphism using BankAccount classes
+ Date: October 20, 2025
+ Assignment: Lab Activities: Composition Lab
 */
 
 #include <iostream>
@@ -28,7 +27,7 @@ int main() {
  }
 
  cout << "\n     Withdrawals    " << endl;
- // demonstrate polymorphism: Withdraw called through base class pointer
+
  accounts[0]->Withdraw(100); // calls CheckingAccount's version (adds fee)
  accounts[1]->Withdraw(100); // calls BankAccount's version (normal)
 
@@ -38,7 +37,7 @@ int main() {
  }
 
  cout << "\n Adding Interest to Savings    \n " << endl;
- // downcast to call the derived function
+ // Call the derived function
  SavingsAccount* sPtr = dynamic_cast<SavingsAccount*>(accounts[1]);
  if (sPtr != nullptr) {
   sPtr->CalculateInterest();
@@ -48,6 +47,10 @@ int main() {
  for (auto acc : accounts) {
   BankAccount::printAccount(*acc);
  }
+
+ cout << "\n    Transaction Histories\n";
+ checking->printHistory();
+ savings->printHistory();
 
  // clean up memory
  for (auto acc : accounts) {

@@ -1,28 +1,36 @@
 #ifndef BANK_ACCOUNT_H
 #define BANK_ACCOUNT_H
 
+
+
 #include <string>
 #include <iostream>
+#include <vector>
+#include "Transaction.h"
+
 
 class BankAccount {
 public:
+
+    void printHistory() const;
+
     // Constructors
     BankAccount();
     BankAccount(std::string accNum, std::string holder, double bal);
 
     // Rule of Three
-    BankAccount(const BankAccount& other);            // copy constructor
-    BankAccount& operator=(const BankAccount& other); // copy assignment
-    virtual ~BankAccount();                                   // destructor
+    BankAccount(const BankAccount& other);
+    BankAccount& operator=(const BankAccount& other);
+    virtual ~BankAccount();
 
     bool Deposit(double amount);
     virtual bool Withdraw(double amount);
 
     // Operators
     BankAccount& operator+=(double amount);
-    BankAccount& operator-=(double amount);     // withdraw in place
-    bool operator==(const BankAccount& other) const; // same account number
-    bool operator<(const BankAccount& other) const;  // compare balances
+    BankAccount& operator-=(double amount);
+    bool operator==(const BankAccount& other) const;
+    bool operator<(const BankAccount& other) const;
     bool operator>(const BankAccount& other) const;
 
     // Getters and one setter
@@ -31,12 +39,15 @@ public:
     double GetBalance() const;
     void SetAccountHolderName(const std::string& newName);
 
-    // Static helpers
+
     static void printAccount(const BankAccount& account);
     static BankAccount createAccountFromInput();
 
 private:
-    // Use simple dynamic memory so we must manage it
+
+    std::vector<Transaction> transactionHistory;
+    void logTransaction(const std::string& type, double amount);
+
     char* accountNumber;
     char* accountHolderName;
     double balance;

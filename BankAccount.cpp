@@ -1,70 +1,98 @@
 #include "BankAccount.h"
 #include <cstring>
 #include <limits>
+#include <ctime>
 
-// Make a new char array and copy the string into it
+static std::string makeTimestamp() {
+    std::time_t t = std::time(nullptr);
+    std::tm tm{};
+#ifdef _WIN32
+    localtime_s(&tm, &t);
+#else
+    localtime_r(&tm, &t);
+#endif
+    char buf[20];
+    std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm);
+    return std::string(buf);
+}
+
 char* BankAccount::allocCopy(const std::string& s) {
     char* p = new char[s.size() + 1];
     std::memcpy(p, s.c_str(), s.size() + 1);
     return p;
 }
 
-// Default values
-BankAccount::BankAccount() {
-    accountNumber = allocCopy("0000");
-    accountHolderName = allocCopy("Unknown");
-    balance = 0.0;
-}
+BankAccount::BankAccount()
+    : accountNumber(nullptr), accountHolderName(nullptr), balance(0.0) {}
 
-BankAccount::BankAccount(std::string accNum, std::string holder, double bal) {
-    accountNumber = allocCopy(accNum);
-    accountHolderName = allocCopy(holder);
-    if (bal >= 0.0) balance = bal;
-    else balance = 0.0;
-}
+BankAccount::BankAccount(std::string accNum, std::string holder, double bal)
+    : accountNumber(allocCopy(accNum)),
+      accountHolderName(allocCopy(holder)),
+      balance(bal >= 0.0 ? bal : 0.0) {}
 
-BankAccount::BankAccount(const BankAccount& other) {
-    accountNumber = allocCopy(other.GetAccountNumber());
-    accountHolderName = allocCopy(other.GetAccountHolderName());
+BankAccount::BankAccount(const BankAccount& other)
+    : accountNumber(nullptr), accountHolderName(nullptr), balance(0.0) {
+    if (other.accountNumber)      accountNumber = allocCopy(other.accountNumber);
+    if (other.accountHolderName)  accountHolderName = allocCopy(other.accountHolderName);
     balance = other.balance;
+    transactionHistory = other.transactionHistory;
 }
 
-// Copy assignment
 BankAccount& BankAccount::operator=(const BankAccount& other) {
     if (this != &other) {
-        char* newNum = allocCopy(other.GetAccountNumber());
-        char* newName = allocCopy(other.GetAccountHolderName());
+        char* newNum  = other.accountNumber     ? allocCopy(other.accountNumber)     : nullptr;
+        char* newName = other.accountHolderName ? allocCopy(other.accountHolderName) : nullptr;
         delete[] accountNumber;
         delete[] accountHolderName;
         accountNumber = newNum;
         accountHolderName = newName;
         balance = other.balance;
+        transactionHistory = other.transactionHistory;
     }
     return *this;
 }
 
-// Destructor
 BankAccount::~BankAccount() {
     delete[] accountNumber;
     delete[] accountHolderName;
 }
 
-// Put money in
+void BankAccount::logTransaction(const std::string& type, double amount) {
+    Transaction t;
+    t.type = type;
+    t.amount = amount;
+    t.timestamp = makeTimestamp();
+    transactionHistory.push_back(t);
+}
+
+void BankAccount::printHistory() const {
+    if (transactionHistory.empty()) {
+        std::cout << "No transactions recorded.\n";
+        return;
+    }
+    std::cout << "Transaction history for "
+              << (accountHolderName ? accountHolderName : "(unknown)") << ":\n";
+    for (const auto& t : transactionHistory) {
+        std::cout << " - " << t.timestamp << " | " << t.type
+                  << " | $" << t.amount << '\n';
+    }
+}
+
 bool BankAccount::Deposit(double amount) {
     if (amount <= 0.0) return false;
     balance += amount;
+    logTransaction("Deposit", amount);
     return true;
 }
 
-// Take money out
 bool BankAccount::Withdraw(double amount) {
     if (amount <= 0.0) return false;
     if (amount > balance) return false;
     balance -= amount;
+    logTransaction("Withdrawal", amount);
     return true;
 }
 
-// Operators required by the lab
 BankAccount& BankAccount::operator+=(double amount) {
     Deposit(amount);
     return *this;
@@ -87,13 +115,12 @@ bool BankAccount::operator>(const BankAccount& other) const {
     return balance > other.balance;
 }
 
-// Getters and setter
 std::string BankAccount::GetAccountNumber() const {
-    return std::string(accountNumber);
+    return accountNumber ? std::string(accountNumber) : std::string();
 }
 
 std::string BankAccount::GetAccountHolderName() const {
-    return std::string(accountHolderName);
+    return accountHolderName ? std::string(accountHolderName) : std::string();
 }
 
 double BankAccount::GetBalance() const {
@@ -106,7 +133,6 @@ void BankAccount::SetAccountHolderName(const std::string& newName) {
     accountHolderName = tmp;
 }
 
-// Static helpers
 void BankAccount::printAccount(const BankAccount& account) {
     std::cout << "Account Number: " << account.GetAccountNumber() << "\n";
     std::cout << "Holder Name:    " << account.GetAccountHolderName() << "\n";
@@ -120,7 +146,7 @@ BankAccount BankAccount::createAccountFromInput() {
 
     std::cout << "Account number: ";
     std::getline(std::cin, accNum);
-    if (accNum.empty()) std::getline(std::cin, accNum); // handle leftover newline
+    if (accNum.empty()) std::getline(std::cin, accNum);
 
     std::cout << "Account holder name: ";
     std::getline(std::cin, holder);

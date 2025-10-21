@@ -9,4 +9,5 @@ add_executable(Inheritance main.cpp
         CheckingAccount.h
         CheckingAccount.cpp
         SavingsAccount.h
-        SavingsAccount.cpp)
+        SavingsAccount.cpp
+        Transaction.h)
